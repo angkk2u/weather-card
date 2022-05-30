@@ -29,26 +29,6 @@ const weatherIconsNight = {
   "windy-variant": "cloudy-night-3",
 };
 
-const windDirections = [
-  "N",
-  "NNE",
-  "NE",
-  "ENE",
-  "E",
-  "ESE",
-  "SE",
-  "SSE",
-  "S",
-  "SSW",
-  "SW",
-  "WSW",
-  "W",
-  "WNW",
-  "NW",
-  "NNW",
-  "N",
-];
-
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "weather-card",
@@ -170,14 +150,22 @@ class WeatherCard extends LitElement {
           )}') no-repeat; background-size: contain;"
           >${stateObj.state}
         </span>
-        ${this._config.name
-          ? html` <span class="title"> ${this._config.name} <p style="font-size:0.5em;"> ${this.hass.states["sensor.naver_weather_weathercast_1"].state} </p></span> `
-          : ""}
-        <span class="temp"
-          >${this.getUnit("temperature") == "°F"
+        <span class="title"> ${this.hass.states["sensor.naver_weather_weathercast"].state}<br>
+        체감온도: ${this.hass.states["sensor.naver_weather_todayfeeltemp"].state}<span class="unit"> °C</span><br>
+          ${this.hass.states["sensor.naver_weather_rainystart"].state !== "비안옴"
+            ? html`
+                <span class="unit">비오는 시간: ${this.hass.states["sensor.naver_weather_rainystart"].state}&nbsp;&nbsp;</span>
+              `
+            : ""}
+          ${this.hass.states["sensor.naver_weather_rainfall"].state > 0
+            ? html`
+                <span class="unit">강수량: ${this.hass.states["sensor.naver_weather_rainfall"].state} mm/h</span>
+              `
+            : ""}
+        </span>
+        <span class="temp">${this.getUnit("temperature") == "°F"
             ? Math.round(stateObj.attributes.temperature)
-            : stateObj.attributes.temperature}</span
-        >
+            : stateObj.attributes.temperature}</span>
         <span class="tempc"> ${this.getUnit("temperature")}</span>
       </div>
     `;
@@ -199,41 +187,33 @@ class WeatherCard extends LitElement {
       <ul class="variations ${this.numberElements > 1 ? "spacer" : ""}">
         <li>
           <ha-icon icon="mdi:thermometer-chevron-down"></ha-icon>
-          최저 : ${this.hass.states["sensor.naver_weather_todaymintemp_1"].state}<span class="unit"> °C</span>
-        </li>
-        <li>
-          <ha-icon icon="mdi:water-percent"></ha-icon>
-          습도 : ${stateObj.attributes.humidity}<span class="unit"> % </span>
+          ${this.hass.states["sensor.naver_weather_todaymintemp"].state}<span class="unit"> °C</span>
         </li>
         <li>
           <ha-icon icon="mdi:thermometer-chevron-up"></ha-icon>
-          최고 : ${this.hass.states["sensor.naver_weather_todaymaxtemp_1"].state}<span class="unit"> °C</span>
+          ${this.hass.states["sensor.naver_weather_todaymaxtemp"].state}<span class="unit"> °C</span>
         </li>
         <li>
-          <ha-icon icon="mdi:weather-windy"></ha-icon>
-          풍속 : ${this.hass.states["sensor.naver_weather_windspeed_1"].state}<span class="unit"> m/s (${this.hass.states["sensor.naver_weather_windbearing_1"].state})</span>
+          <ha-icon icon="mdi:water-percent"></ha-icon>
+          ${stateObj.attributes.humidity}<span class="unit"> % </span>
         </li>
         <li>
           <ha-icon icon="mdi:blur"></ha-icon>
-          미세먼지 : ${this.hass.states["sensor.naver_weather_finedustgrade_1"].state} (${this.hass.states["sensor.naver_weather_finedust_1"].state}<span class="unit"> ㎍/㎥)</span>
+          ${this.hass.states["sensor.naver_weather_finedust"].state}<span class="unit"> ㎍/㎥ ${this.hass.states["sensor.naver_weather_finedustgrade"].state}</span>
         </li>
         <li>
-          <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
-          오존 : ${this.hass.states["sensor.naver_weather_ozongrade_1"].state} (${this.hass.states["sensor.naver_weather_ozon_1"].state}<span class="unit"> ppm)</span>
+          <ha-icon icon="mdi:weather-windy"></ha-icon>
+          ${this.hass.states["sensor.naver_weather_windspeed"].state}<span class="unit"> m/s ${this.hass.states["sensor.naver_weather_windbearing"].state}풍</span>
         </li>
         <li>
           <ha-icon icon="mdi:blur-linear"></ha-icon>
-          초미세먼지 : ${this.hass.states["sensor.naver_weather_ultrafinedustgrade_1"].state} (${this.hass.states["sensor.naver_weather_ultrafinedust_1"].state}<span class="unit"> ㎍/㎥)</span>
-        </li>
-        <li>
-          <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
-          자외선 : ${this.hass.states["sensor.naver_weather_todayuvgrade_1"].state} (${this.hass.states["sensor.naver_weather_todayuv_1"].state})
+          ${this.hass.states["sensor.naver_weather_ultrafinedust"].state}<span class="unit"> ㎍/㎥ ${this.hass.states["sensor.naver_weather_ultrafinedustgrade"].state}</span>
         </li>
         ${next_rising
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-up"></ha-icon>
-                일출 : ${next_rising.toLocaleTimeString()}
+                ${next_rising.toLocaleTimeString()}
               </li>
             `
           : ""}
@@ -241,7 +221,7 @@ class WeatherCard extends LitElement {
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-down"></ha-icon>
-                일몰 : ${next_setting.toLocaleTimeString()}
+                ${next_setting.toLocaleTimeString()}
               </li>
             `
           : ""}
@@ -379,11 +359,11 @@ class WeatherCard extends LitElement {
 
       .title {
         position: absolute;
-        left: 5em;
+        left: 8em;
+        top: 1.1em;
         font-weight: 300;
-        font-size: 2em;
+        font-size: 1.1em;
         color: var(--primary-text-color);
-        margin-top: -10px;
       }
 
       .temp {
@@ -392,7 +372,6 @@ class WeatherCard extends LitElement {
         color: var(--primary-text-color);
         position: absolute;
         right: 1em;
-        margin-top: 4px;
       }
 
       .tempc {
@@ -402,14 +381,14 @@ class WeatherCard extends LitElement {
         color: var(--primary-text-color);
         position: absolute;
         right: 1em;
-        margin-top: -10px;
+        margin-top: -14px;
         margin-right: 7px;
       }
 
       @media (max-width: 460px) {
         .title {
-          font-size: 2.2em;
-          left: 4em;
+          font-size: 1.1em;
+          left: 7em;
         }
         .temp {
           font-size: 3em;
@@ -421,14 +400,7 @@ class WeatherCard extends LitElement {
 
       .current {
         padding: 1.2em 0;
-        margin-bottom: 3.5em;
-      }
-
-      .weathercast {
-        position: absolute;
-        left: 3em;
-        font-weight: 300;
-        color: var(--primary-text-color);
+        margin-bottom: 2.5em;
       }
 
       .variations {
@@ -514,7 +486,7 @@ class WeatherCard extends LitElement {
         height: 10em;
         margin-top: -4em;
         position: absolute;
-        left: 0em;
+        left: -1em;
       }
 
       .icon {
