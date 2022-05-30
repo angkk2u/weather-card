@@ -1,4 +1,4 @@
-const LitElement = customElements.get("ha-panel-lovelace") ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace")) : Object.getPrototypeOf(customElements.get("hc-lovelace"));
+const LitElement = customElements.get("hui-masonry-view") ? Object.getPrototypeOf(customElements.get("hui-masonry-view")) : Object.getPrototypeOf(customElements.get("hui-view"));
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
@@ -127,7 +127,6 @@ class WeatherCard extends LitElement {
 
     this.numberElements = 0;
 
-    const lang = this.hass.selectedLanguage || this.hass.language;
     const stateObj = this.hass.states[this._config.entity];
 
     if (!stateObj) {
@@ -150,9 +149,9 @@ class WeatherCard extends LitElement {
     return html`
       <ha-card @click="${this._handleClick}">
         ${this._config.current !== false ? this.renderCurrent(stateObj) : ""}
-        ${this._config.details !== false ? this.renderDetails(stateObj, lang) : ""}
+        ${this._config.details !== false ? this.renderDetails(stateObj) : ""}
         ${this._config.forecast !== false
-          ? this.renderForecast(stateObj.attributes.forecast, lang)
+          ? this.renderForecast(stateObj.attributes.forecast)
           : ""}
       </ha-card>
     `;
@@ -172,7 +171,7 @@ class WeatherCard extends LitElement {
           >${stateObj.state}
         </span>
         ${this._config.name
-          ? html` <span class="title"> ${this._config.name} </span> `
+          ? html` <span class="title"> ${this._config.name} <p style="font-size:0.5em;"> ${this.hass.states["sensor.naver_weather_weathercast_1"].state} </p></span> `
           : ""}
         <span class="temp"
           >${this.getUnit("temperature") == "°F"
@@ -184,20 +183,14 @@ class WeatherCard extends LitElement {
     `;
   }
 
-  renderDetails(stateObj, lang) {
+  renderDetails(stateObj) {
     const sun = this.hass.states["sun.sun"];
     let next_rising;
     let next_setting;
 
     if (sun) {
-      next_rising = new Date(sun.attributes.next_rising).toLocaleTimeString(lang, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
-      next_setting = new Date(sun.attributes.next_setting).toLocaleTimeString(lang, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    });
+      next_rising = new Date(sun.attributes.next_rising);
+      next_setting = new Date(sun.attributes.next_setting);
     }
 
     this.numberElements++;
@@ -205,35 +198,42 @@ class WeatherCard extends LitElement {
     return html`
       <ul class="variations ${this.numberElements > 1 ? "spacer" : ""}">
         <li>
+          <ha-icon icon="mdi:thermometer-chevron-down"></ha-icon>
+          최저 : ${this.hass.states["sensor.naver_weather_todaymintemp_1"].state}<span class="unit"> °C</span>
+        </li>
+        <li>
           <ha-icon icon="mdi:water-percent"></ha-icon>
-          ${stateObj.attributes.humidity}<span class="unit"> % </span>
+          습도 : ${stateObj.attributes.humidity}<span class="unit"> % </span>
         </li>
         <li>
-          <ha-icon icon="mdi:weather-windy"></ha-icon> ${windDirections[
-            parseInt((stateObj.attributes.wind_bearing + 11.25) / 22.5)
-          ]}
-          ${stateObj.attributes.wind_speed}<span class="unit">
-            ${this.getUnit("length")}/h
-          </span>
+          <ha-icon icon="mdi:thermometer-chevron-up"></ha-icon>
+          최고 : ${this.hass.states["sensor.naver_weather_todaymaxtemp_1"].state}<span class="unit"> °C</span>
         </li>
         <li>
-          <ha-icon icon="mdi:gauge"></ha-icon>
-          ${stateObj.attributes.pressure}
-          <span class="unit">
-            ${this.getUnit("air_pressure")}
-          </span>
+          <ha-icon icon="mdi:weather-windy"></ha-icon>
+          풍속 : ${this.hass.states["sensor.naver_weather_windspeed_1"].state}<span class="unit"> m/s (${this.hass.states["sensor.naver_weather_windbearing_1"].state})</span>
         </li>
         <li>
-          <ha-icon icon="mdi:weather-fog"></ha-icon> ${stateObj.attributes
-            .visibility}<span class="unit">
-            ${this.getUnit("length")}
-          </span>
+          <ha-icon icon="mdi:blur"></ha-icon>
+          미세먼지 : ${this.hass.states["sensor.naver_weather_finedustgrade_1"].state} (${this.hass.states["sensor.naver_weather_finedust_1"].state}<span class="unit"> ㎍/㎥)</span>
+        </li>
+        <li>
+          <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
+          오존 : ${this.hass.states["sensor.naver_weather_ozongrade_1"].state} (${this.hass.states["sensor.naver_weather_ozon_1"].state}<span class="unit"> ppm)</span>
+        </li>
+        <li>
+          <ha-icon icon="mdi:blur-linear"></ha-icon>
+          초미세먼지 : ${this.hass.states["sensor.naver_weather_ultrafinedustgrade_1"].state} (${this.hass.states["sensor.naver_weather_ultrafinedust_1"].state}<span class="unit"> ㎍/㎥)</span>
+        </li>
+        <li>
+          <ha-icon icon="mdi:weather-sunny-alert"></ha-icon>
+          자외선 : ${this.hass.states["sensor.naver_weather_todayuvgrade_1"].state} (${this.hass.states["sensor.naver_weather_todayuv_1"].state})
         </li>
         ${next_rising
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-up"></ha-icon>
-                ${next_rising}
+                일출 : ${next_rising.toLocaleTimeString()}
               </li>
             `
           : ""}
@@ -241,7 +241,7 @@ class WeatherCard extends LitElement {
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-down"></ha-icon>
-                ${next_setting}
+                일몰 : ${next_setting.toLocaleTimeString()}
               </li>
             `
           : ""}
@@ -249,10 +249,12 @@ class WeatherCard extends LitElement {
     `;
   }
 
-  renderForecast(forecast, lang) {
+  renderForecast(forecast) {
     if (!forecast || forecast.length === 0) {
       return html``;
     }
+
+    const lang = this.hass.selectedLanguage || this.hass.language;
 
     this.numberElements++;
     return html`
@@ -377,10 +379,11 @@ class WeatherCard extends LitElement {
 
       .title {
         position: absolute;
-        left: 3em;
+        left: 5em;
         font-weight: 300;
-        font-size: 3em;
+        font-size: 2em;
         color: var(--primary-text-color);
+        margin-top: -10px;
       }
 
       .temp {
@@ -389,6 +392,7 @@ class WeatherCard extends LitElement {
         color: var(--primary-text-color);
         position: absolute;
         right: 1em;
+        margin-top: 4px;
       }
 
       .tempc {
@@ -398,7 +402,7 @@ class WeatherCard extends LitElement {
         color: var(--primary-text-color);
         position: absolute;
         right: 1em;
-        margin-top: -14px;
+        margin-top: -10px;
         margin-right: 7px;
       }
 
@@ -418,6 +422,13 @@ class WeatherCard extends LitElement {
       .current {
         padding: 1.2em 0;
         margin-bottom: 3.5em;
+      }
+
+      .weathercast {
+        position: absolute;
+        left: 3em;
+        font-weight: 300;
+        color: var(--primary-text-color);
       }
 
       .variations {
