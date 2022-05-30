@@ -1,4 +1,4 @@
-const LitElement = customElements.get("hui-masonry-view") ? Object.getPrototypeOf(customElements.get("hui-masonry-view")) : Object.getPrototypeOf(customElements.get("hui-view"));
+const LitElement = customElements.get("ha-panel-lovelace") ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace")) : Object.getPrototypeOf(customElements.get("hc-lovelace"));
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
@@ -127,6 +127,7 @@ class WeatherCard extends LitElement {
 
     this.numberElements = 0;
 
+    const lang = this.hass.selectedLanguage || this.hass.language;
     const stateObj = this.hass.states[this._config.entity];
 
     if (!stateObj) {
@@ -149,9 +150,9 @@ class WeatherCard extends LitElement {
     return html`
       <ha-card @click="${this._handleClick}">
         ${this._config.current !== false ? this.renderCurrent(stateObj) : ""}
-        ${this._config.details !== false ? this.renderDetails(stateObj) : ""}
+        ${this._config.details !== false ? this.renderDetails(stateObj, lang) : ""}
         ${this._config.forecast !== false
-          ? this.renderForecast(stateObj.attributes.forecast)
+          ? this.renderForecast(stateObj.attributes.forecast, lang)
           : ""}
       </ha-card>
     `;
@@ -183,14 +184,20 @@ class WeatherCard extends LitElement {
     `;
   }
 
-  renderDetails(stateObj) {
+  renderDetails(stateObj, lang) {
     const sun = this.hass.states["sun.sun"];
     let next_rising;
     let next_setting;
 
     if (sun) {
-      next_rising = new Date(sun.attributes.next_rising);
-      next_setting = new Date(sun.attributes.next_setting);
+      next_rising = new Date(sun.attributes.next_rising).toLocaleTimeString(lang, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
+      next_setting = new Date(sun.attributes.next_setting).toLocaleTimeString(lang, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
     }
 
     this.numberElements++;
@@ -249,12 +256,10 @@ class WeatherCard extends LitElement {
     `;
   }
 
-  renderForecast(forecast) {
+  renderForecast(forecast, lang) {
     if (!forecast || forecast.length === 0) {
       return html``;
     }
-
-    const lang = this.hass.selectedLanguage || this.hass.language;
 
     this.numberElements++;
     return html`
