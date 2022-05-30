@@ -237,7 +237,7 @@ class WeatherCard extends LitElement {
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-up"></ha-icon>
-                일출 : ${next_rising.toLocaleTimeString()}
+                일출 : ${next_rising}
               </li>
             `
           : ""}
@@ -245,7 +245,7 @@ class WeatherCard extends LitElement {
           ? html`
               <li>
                 <ha-icon icon="mdi:weather-sunset-down"></ha-icon>
-                일몰 : ${next_setting.toLocaleTimeString()}
+                일몰 : ${next_setting}
               </li>
             `
           : ""}
