@@ -232,7 +232,10 @@ class WeatherCard extends LitElement {
           <ha-icon icon="mdi:blur-linear"></ha-icon>
           초미세먼지 : ${this.hass.states["sensor.naver_weather_ultrafinedustgrade_1"].state} (${this.hass.states["sensor.naver_weather_ultrafinedust_1"].state}<span class="unit"> ㎍/㎥)</span>
         </li>
-        
+        <li>
+          <ha-icon icon="mdi:blur-linear"></ha-icon>
+          <!-- 자외선 정보 자리 -->
+        </li>
         ${next_rising
           ? html`
               <li>
